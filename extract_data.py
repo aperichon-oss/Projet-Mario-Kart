@@ -18,10 +18,10 @@ for file in os.listdir():
                     data.append({
                         "course": file.replace(".html", ""),
                         "time": cols[1] if len(cols) > 1 else "",
-                        "character": cols[10] if len(cols) > 2 else "",
-                        "kart": cols[11] if len(cols) > 3 else "",
-                        "wheels": cols[12] if len(cols) > 4 else "",
-                        "glider": cols[13] if len(cols) > 5 else "",
+                        "character": cols[10] if len(cols) > 10 else "",
+                        "kart": cols[11] if len(cols) > 11 else "",
+                        "wheels": cols[12] if len(cols) > 12 else "",
+                        "glider": cols[13] if len(cols) > 13 else "",
                     })
 
 print(f"Extraction terminée : {len(data)} lignes récupérées")
