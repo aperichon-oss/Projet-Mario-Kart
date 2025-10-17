@@ -18,6 +18,9 @@ for file in os.listdir():
                     data.append({
                         "course": file.replace(".html", ""),
                         "time": cols[1] if len(cols) > 1 else "",
+                        "lap 1": cols[5] if len(cols) > 5 else "",
+                        "lap 2": cols[6] if len(cols) > 6 else "",
+                        "lap 3": cols[7] if len(cols) > 7 else "",
                         "character": cols[10] if len(cols) > 10 else "",
                         "kart": cols[11] if len(cols) > 11 else "",
                         "wheels": cols[12] if len(cols) > 12 else "",
