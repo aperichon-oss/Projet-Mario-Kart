@@ -2,29 +2,46 @@ from bs4 import BeautifulSoup
 import os
 
 data = []
+
 for file in os.listdir():
     if file.endswith(".html"):
+        print(f"Lecture de {file}...")
         with open(file, "r", encoding="utf-8") as f:
             soup = BeautifulSoup(f, "html.parser")
-            
             tables = soup.find_all("table", class_="wr")
             if len(tables) < 2:
+                print(f"Pas assez de tables dans {file}")
                 continue
             table = tables[1]
             rows = table.find_all("tr")[1:]
             for row in rows:
-                cols = [td.text.strip() for td in row.find_all("td")]
-                if len(cols) > 0:
-                    data.append({
-                        "course": file.replace(".html", ""),
-                        "time": cols[1] if len(cols) > 1 else "",
-                        "lap 1": cols[5] if len(cols) > 5 else "",
-                        "lap 2": cols[6] if len(cols) > 6 else "",
-                        "lap 3": cols[7] if len(cols) > 7 else "",
-                        "character": cols[10] if len(cols) > 10 else "",
-                        "kart": cols[11] if len(cols) > 11 else "",
-                        "wheels": cols[12] if len(cols) > 12 else "",
-                        "glider": cols[13] if len(cols) > 13 else "",
-                    })
-
-print(f"Extraction terminée : {len(data)} lignes récupérées")
+                cells = row.find_all("td")
+                if len(cells) < 10:
+                    continue
+                img = cells[3].find("img")
+                if img and img.get("alt"):
+                    nationality = img["alt"].split()[0]
+                else:
+                    nationality = ""
+                course_name = file.replace(".html", "").replace("display.php?track=", "")
+                course_name = course_name.replace("+", " ")
+                data.append({
+                    "course": course_name,
+                    "time": cells[1].text.strip(),
+                    "nationality": nationality,
+                    "lap 1": cells[5].text.strip(),
+                    "lap 2": cells[6].text.strip(),
+                    "lap 3": cells[7].text.strip(),
+                    "character": cells[10].text.strip(),
+                    "kart": cells[11].text.strip(),
+                    "tires": cells[12].text.strip(),
+                    "glider": cells[13].text.strip(),
+                })
+print(f"\nExtraction terminée : {len(data)} records trouvés")
+print("\nAperçu des données :")
+for i in range(min(5, len(data))):
+    print(f"\n{i+1}. {data[i]["course"]}")
+    print(f"   Temps: {data[i]["time"]}")
+    print(f"   Pays: {data[i]["nationality"]}")
+    print(f"   Lap 1, 2, 3: {data[i]["lap 1"]} / {data[i]["lap 2"]} / {data[i]["lap 3"]}")
+    print(f"   Setup: {data[i]["character"]} / {data[i]["kart"]} / {data[i]["tires"]} / {data[i]["glider"]}")
