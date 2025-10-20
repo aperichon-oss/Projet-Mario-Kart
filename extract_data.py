@@ -2,53 +2,69 @@ from bs4 import BeautifulSoup
 import os
 import re
 
-data = []
 
-for file in os.listdir():
-    if file.endswith(".html"):
-        print(f"Lecture de {file}...")
-        with open(file, "r", encoding="utf-8") as f:
-            soup = BeautifulSoup(f, "html.parser")
-            tables = soup.find_all("table", class_="wr")
-            if len(tables) < 2:
-                print(f"Pas assez de tables dans {file}")
-                continue
-            table = tables[1]
-            rows = table.find_all("tr")[1:]
-            for row in rows:
-                cells = row.find_all("td")
-                if len(cells) < 14:
-                    continue
-                img = cells[3].find("img")
-                if img and img.get("alt"):
-                    nationality = img["alt"].split()[0]
-                else:
-                    nationality = ""
-                course_name = file.replace(".html", "").replace("display.php?track=", "")
-                course_name = course_name.replace("+", " ")
-                data.append({
-                    "course": course_name,
-                    "time": cells[1].text.strip(),
-                    "nationality": nationality,
-                    "lap 1": cells[5].text.strip(),
-                    "lap 2": cells[6].text.strip(),
-                    "lap 3": cells[7].text.strip(),
-                    "character": cells[10].text.strip(),
-                    "kart": cells[11].text.strip(),
-                    "tires": cells[12].text.strip(),
-                    "glider": cells[13].text.strip(),
-                })
-print(f"\nExtraction terminée : {len(data)} records trouvés")
-print("\nAperçu des données :")
-for i in range(min(5, len(data))):
-    print(f"\n{i+1}. {data[i]["course"]}")
-    print(f"   Temps: {data[i]["time"]}")
-    print(f"   Pays: {data[i]["nationality"]}")
-    print(f"   Lap 1, 2, 3: {data[i]["lap 1"]} / {data[i]["lap 2"]} / {data[i]["lap 3"]}")
-    print(f"   Setup: {data[i]["character"]} / {data[i]["kart"]} / {data[i]["tires"]} / {data[i]["glider"]}")
+def extract_data_from_directory(directory="."):
+    data = []
+
+    for file in os.listdir():
+        if file.endswith(".html"):
+            print(f"Lecture de {file}...")
+            filepath = os.path.join(directory, file)
+            records = parse_html_file(filepath)
+            data.extend(records)
+    print(f"\nExtraction terminée : {len(data)} records trouvés")
+    return data
+
+
+def parse_html_file(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
+        tables = soup.find_all("table", class_="wr")
+        if len(tables) < 2:
+            print(f"Pas assez de tables dans {filepath}")
+            return []
+        table = tables[1]
+        rows = table.find_all("tr")[1:]
+        course_name = os.path.basename(filepath).replace(".html", "").replace("display.php?track=", "").replace("+", " ")
+        records = []
+        for row in rows:
+            record = extract_row_data(row, course_name)
+            if record:
+                records.append(record)
+        return records
+
+
+def extract_row_data(row, course_name):
+    cells = row.find_all("td")
+    if len(cells) < 14:
+        return None
+    img = cells[3].find("img")
+    nationality = img["alt"].split()[0] if img and img.get("alt") else ""
+    return {
+        "course": course_name,
+        "time": cells[1].text.strip(),
+        "nationality": nationality,
+        "lap 1": cells[5].text.strip(),
+        "lap 2": cells[6].text.strip(),
+        "lap 3": cells[7].text.strip(),
+        "character": cells[10].text.strip(),
+        "kart": cells[11].text.strip(),
+        "tires": cells[12].text.strip(),
+        "glider": cells[13].text.strip(),
+    }
+
+
+def display_preview(data, n=5):
+    print("\nAperçu des données :")
+    for i in range(min(n, len(data))):
+        print(f"\n{i+1}. {data[i]['course']}")
+        print(f"   Temps: {data[i]['time']}")
+        print(f"   Pays: {data[i]['nationality']}")
+        print(f"   Lap 1, 2, 3: {data[i]['lap 1']} / {data[i]['lap 2']} / {data[i]['lap 3']}")
+        print(f"   Setup: {data[i]['character']} / {data[i]['kart']} / {data[i]['tires']} / {data[i]['glider']}")
+
 
 # Nettoyage des données
-print("\nNettoyage des données en cours...")
 
 
 def convert_time_to_ms(time_str):
@@ -76,21 +92,63 @@ def convert_lap_to_ms(lap_float):
         return None
 
 
-for record in data:
-    record["time_ms"] = convert_time_to_ms(record["time"])
-    if "lap 1" in record:
-        record["lap1_ms"] = convert_lap_to_ms(record["lap 1"])
-    if "lap 2" in record:
-        record["lap2_ms"] = convert_lap_to_ms(record["lap 2"])
-    if "lap 3" in record:
-        record["lap3_ms"] = convert_lap_to_ms(record["lap 3"])
-    if record["nationality"]:
-        record["nationality"] = record["nationality"].split()[0]
+def clean_data(data):
+    print("\nNettoyage des données en cours...")
+    for record in data:
+        record["time_ms"] = convert_time_to_ms(record["time"])
+        if "lap 1" in record:
+            record["lap1_ms"] = convert_lap_to_ms(record["lap 1"])
+        if "lap 2" in record:
+            record["lap2_ms"] = convert_lap_to_ms(record["lap 2"])
+        if "lap 3" in record:
+            record["lap3_ms"] = convert_lap_to_ms(record["lap 3"])
+        if record["nationality"]:
+            record["nationality"] = record["nationality"].split()[0]
+    print("Nettoyage terminé !")
+    return data
 
-print("Nettoyage terminé !")
-print("\nAperçu des données NETTOYÉES :")
-for i in range(min(3, len(data))):
-    print(f"\n{i+1}. {data[i]["course"]}")
-    print(f"   Temps brut: {data[i]["time"]}")
-    print(f"   Temps (ms): {data[i]["time_ms"]}")
-    print(f"   Lap 1, 2, 3 : {data[i].get("lap1_ms")} / {data[i].get("lap2_ms")} / {data[i].get("lap3_ms")}")
+
+def display_cleaned_preview(data, n=3):
+    print("\nAperçu des données NETTOYÉES :")
+    for i in range(min(n, len(data))):
+        print(f"\n{i+1}. {data[i]["course"]}")
+        print(f"   Temps brut: {data[i]["time"]}")
+        print(f"   Temps (ms): {data[i]["time_ms"]}")
+        print(f"   Lap 1, 2, 3 : {data[i].get("lap1_ms")} / {data[i].get("lap2_ms")} / {data[i].get("lap3_ms")}")
+
+
+def save_to_csv(data, filename="Test.csv"):
+    with open("Test.csv", "w") as file:
+        file.write("Course;")
+        file.write("Temps;")
+        file.write("Pays;")
+        file.write("Tour 1;")
+        file.write("Tour 2;")
+        file.write("Tour 3;")
+        file.write("Personnage;")
+        file.write("Véhicule;")
+        file.write("Roues;")
+        file.write("Deltaplane;")
+        for i in range(len(data)):
+            file.write(f"{data[i]["course"]};")
+            file.write(f"{data[i]["time_ms"]};")
+            file.write(f"{data[i]["nationality"]};")
+            file.write(f"{data[i]["lap1_ms"]};")
+            file.write(f"{data[i]["lap2_ms"]};")
+            file.write(f"{data[i]["lap3_ms"]};")
+            file.write(f"{data[i]["character"]};")
+            file.write(f"{data[i]["kart"]};")
+            file.write(f"{data[i]["tires"]};")
+            file.write(f"{data[i]["glider"]};")
+
+
+def main():
+    data = extract_data_from_directory()
+    display_preview(data)
+    data = clean_data(data)
+    display_cleaned_preview(data)
+    save_to_csv(data)
+
+
+if __name__ == "__main__":
+    main()
