@@ -5,9 +5,12 @@ import re
 
 def extract_data_from_directory(directory="."):
     data = []
-
+    course_to_ignore = "display.php?track=GCN+Baby+Park.html"
     for file in os.listdir():
         if file.endswith(".html"):
+            if course_to_ignore in file:
+                print(f"IGNORÉ : Le fichier {file} correspond à la course {course_to_ignore}.")
+                continue
             print(f"Lecture de {file}...")
             filepath = os.path.join(directory, file)
             records = parse_html_file(filepath)
@@ -128,7 +131,7 @@ def save_to_csv(data, filename="Test.csv"):
         file.write("Personnage;")
         file.write("Véhicule;")
         file.write("Roues;")
-        file.write("Deltaplane;")
+        file.write("Deltaplane;\n")
         for i in range(len(data)):
             file.write(f"{data[i]["course"]};")
             file.write(f"{data[i]["time_ms"]};")
@@ -139,7 +142,7 @@ def save_to_csv(data, filename="Test.csv"):
             file.write(f"{data[i]["character"]};")
             file.write(f"{data[i]["kart"]};")
             file.write(f"{data[i]["tires"]};")
-            file.write(f"{data[i]["glider"]};")
+            file.write(f"{data[i]["glider"]};\n")
 
 
 def main():
