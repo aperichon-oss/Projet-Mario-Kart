@@ -95,6 +95,20 @@ def convert_lap_to_ms(lap_float):
         return None
 
 
+def normalize_str(character_name, tires_name):
+    normalized_char = character_name
+    normalized_tires = tires_name
+    if character_name == "Heavy Mii Yoshi":
+        normalized_char = "Heavy Mii Yoshi"
+    elif character_name.endswith("Yoshi"):
+        normalized_char = "Yoshi"
+    elif character_name.startswith("Birdo"):
+        normalized_char = "Birdo"
+    if tires_name.endswith("Roller"):
+        normalized_tires = "Roller"
+    return normalized_char, normalized_tires
+
+
 def clean_data(data):
     print("\nNettoyage des données en cours...")
     for record in data:
@@ -107,6 +121,7 @@ def clean_data(data):
             record["lap3_ms"] = convert_lap_to_ms(record["lap 3"])
         if record["nationality"]:
             record["nationality"] = record["nationality"].split()[0]
+        record["character"], record["tires"] = normalize_str(record["character"], record["tires"])
     print("Nettoyage terminé !")
     return data
 
