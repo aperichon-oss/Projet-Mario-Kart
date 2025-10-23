@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
 import os
 import re
+import main
+import main2
+import get_track_page
 
 
 def extract_data_from_directory(directory="."):
@@ -160,7 +163,7 @@ def save_to_csv(data, filename="Test.csv"):
             file.write(f"{data[i]["glider"]};\n")
 
 
-def main():
+def all_fonctions():
     data = extract_data_from_directory()
     display_preview(data)
     data = clean_data(data)
@@ -169,4 +172,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main
+    main2
+    get_track_page
+    all_fonctions()
