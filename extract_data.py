@@ -101,8 +101,12 @@ def convert_lap_to_ms(lap_float):
 def normalize_str(character_name, tires_name):
     normalized_char = character_name
     normalized_tires = tires_name
-    if character_name == "Heavy Mii Yoshi":
-        normalized_char = "Heavy Mii Yoshi"
+    if character_name.startswith("Heavy Mii"):
+        normalized_char = "Heavy Mii"
+    elif character_name.startswith("Medium Mii"):
+        normalized_char = "Medium Mii"
+    elif character_name.startswith("Light Mii"):
+        normalized_char = "Light Mii"
     elif character_name.endswith("Yoshi"):
         normalized_char = "Yoshi"
     elif character_name.startswith("Birdo"):
